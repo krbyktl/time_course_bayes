@@ -20,20 +20,6 @@ import numpy as np
 fileloc = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/clean sugiyama kinase substrates.xlsx"
 ks_df = pd.read_excel(fileloc, engine='openpyxl')
 
-ks_df.rename(columns = {'(-6)':'minus 6',
-                        '(-5)':'minus 5',
-                        '(-4)':'minus 4',
-                        '(-3)':'minus 3',
-                        '(-2)':'minus 2',
-                        '(-1)':'minus 1',
-                        0:'zero',
-                        '(+1)':'plus 1',
-                        '(+2)':'plus 2',
-                        '(+3)':'plus 3',
-                        '(+4)':'plus 4',
-                        '(+5)':'plus 5',
-                        '(+6)':'plus 6',}, inplace = True)
-
 #divide dataframe per kinase
 kinases = ks_df['Kinase'].unique()
 

@@ -18,7 +18,7 @@ import pandas as pd
 import requests as rq
 from io import BytesIO
 
-url = "https://github.com/krbyktl/time_course_bayes/blob/master/coloc_mapping.xlsx?raw=true"
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/coloc_mapping.xlsx?raw=true"
 data = rq.get(url).content
 kinase_coloc = pd.read_excel(BytesIO(data), sheet_name = "kinase_distr")
 cluster_coloc = pd.read_excel(BytesIO(data), sheet_name = "cluster_distr")
