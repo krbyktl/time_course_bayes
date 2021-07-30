@@ -15,10 +15,13 @@ Created on Fri May  7 10:43:05 2021
 # =============================================================================
 
 import pandas as pd
+import requests as rq
+from io import BytesIO
 
-fileloc = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/colocalization mapping V2.xlsx"
-kinase_coloc = pd.read_excel(fileloc, sheet_name = "kinase distr")
-cluster_coloc = pd.read_excel(fileloc, sheet_name = "cluster distr")
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/coloc_mapping.xlsx?raw=true"
+data = rq.get(url).content
+kinase_coloc = pd.read_excel(BytesIO(data), sheet_name = "kinase_distr")
+cluster_coloc = pd.read_excel(BytesIO(data), sheet_name = "cluster_distr")
 
 cluster_means = cluster_coloc.groupby(["Cluster"]).mean()
 cluster_names = cluster_means.index
@@ -28,7 +31,7 @@ kinase_names = kinase_coloc['Kinases'].to_numpy()
 kinase_coloc = kinase_coloc.drop(['Kinases'],axis=1)
 kinase_coloc = kinase_coloc.to_numpy()
 
-from bayesmodules import dotscores
+from bayesian_module import dotscores
 colocdot_df = dotscores(kinase_coloc, cluster_means, kinase_names, cluster_names)
 
 #save file

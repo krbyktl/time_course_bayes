@@ -12,7 +12,6 @@ import math
 
 # =============================================================================
 # module for generating dot-score rankings
-# x refers to the kinases, y refers to the clusters
 # =============================================================================
 def dotscores(kin_vals, clus_vals, kin_names, clus_names):
     y_scores = list(range(len(clus_vals)))
