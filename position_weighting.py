@@ -125,7 +125,6 @@ url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/TC_ra
 data = rq.get(url).content
 cdf = pd.read_excel(BytesIO(data))
 
-
 clusters_name = ['IB','IA1','IA2a','IA2b','IA2c','IIA1a','IIA1b',
             'IIB1a','IIB1b','IIIA','IIIB1','IIIB2','IVA','IVB']
 
@@ -192,14 +191,6 @@ for j in range(len(norm_content)):
         pos_clus[g] = np.transpose(np.nan_to_num(IC_cluster_array[g]))[j]
     pos_dotscore_list[j] = dotscores(pos_kin,pos_clus,screened_kinases,clusters_name)
     
-# %%
-writer=pd.ExcelWriter("/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/position rankings_V3IC.xlsx")
-positions = ['-6','-5','-4','-3','-2','-1','+1','+2','+3','+4','+5','+6']
-for i, A in enumerate(pos_dotscore_list):
-    A.to_excel(writer, sheet_name=positions[i])
-
-writer.save()
-
 
 
 
