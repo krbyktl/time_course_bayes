@@ -7,8 +7,9 @@ Created on Fri May  7 10:14:11 2021
 import pandas as pd
 import numpy as np
 import math
+import requests as rq
+from io import BytesIO
 
-#functions for Bayes analysis
 
 # =============================================================================
 # module for generating dot-score rankings
@@ -25,12 +26,13 @@ def dotscores(kin_vals, clus_vals, kin_names, clus_names):
     return xydot_df
 
 # =============================================================================
-# interpolating scores from Euijung Park's KinMap nearest neighbor match
+# interpolating scores from KinMap nearest neighbor match
 # kinmatrix refers to the sugiyama-derived matrix of interest (just one)
 # =============================================================================
 def interpolate(kinmatrix):
-    fileloc = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/euijung assignment/interpolator_forscript.xlsx"
-    interpoltools = pd.read_excel(fileloc, None)
+    url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/interpolator_kinases.xlsx?raw=true"
+    data = rq.get(url).content
+    interpoltools = pd.read_excel(BytesIO(data), None)
     kinmatrix.reset_index(inplace=True)
     kinmatrix = kinmatrix.rename(columns = {'index':'Human Kinase'})
     merge1 = kinmatrix.merge(interpoltools['match 355'], on='Human Kinase', how='left')     
@@ -71,8 +73,9 @@ def cMBF_calc(newdata,noise):
 # =============================================================================
 
 def selectpos_bayes(cluster,dotposdata,coloc):
-    fileloc5 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/important positions in clusters.xlsx"
-    cluspos = pd.read_excel(fileloc5, 'V3')
+    url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/clus_impt_pos.xlsx?raw=true"
+    data = rq.get(url).content
+    cluspos = pd.read_excel(BytesIO(data), sheet_name = "V3")
     clusmat = cluspos[cluster]
     int_posselec = []
     int_posselec.append(dotposdata[0]['Kinases'])

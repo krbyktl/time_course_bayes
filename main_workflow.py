@@ -20,14 +20,17 @@ Created on Fri May 21 15:51:28 2021
 
 import pandas as pd
 import numpy as np
+import requests as rq
+from io import BytesIO
 from bayesmodules import interpolate
 from bayesmodules import cMBF_calc
+from coloc_data import coloc_dots
 
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/expression_data.xlsx?raw=true"
+data = rq.get(url).content
+express_df = pd.read_excel(BytesIO(data), None)
 
-fileloc_1 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/expression data.xlsx"
-express_df = pd.read_excel(fileloc_1, None)
-
-#from sugiyama_data import STYdotscores_df
+#from posiiton_weighting import STYdotscores_df
 main_vec = express_df['exp bayes calc V2']
 STYdots = interpolate(STYdotscores_df)
 main_vec = main_vec.rename(columns = {'Gene Symbol':'Kinases'})
@@ -46,14 +49,11 @@ main_vec = main_vec.drop(clus_names,axis=1)
 fileloc_3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/BayesTC complete calc_python V17.xlsx"
 writer=pd.ExcelWriter(fileloc_3)
 main_vec.to_excel(writer, sheet_name='STY ranking')
-
 writer.save()
 
 # %%
 #colocalization ranking
-fileloc_2 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/colocalization mapping V2.xlsx"
-coloc_df = pd.read_excel(fileloc_2, "coloc dot ranking V2")
-
+coloc_df = coloc_dots("https://github.com/krbyktl/time_course_bayes/blob/master/data_files/coloc_mapping.xlsx?raw=true")
 coloc_vec = main_vec[['Kinases']].copy()
 coloc_vec = coloc_vec.merge(coloc_df,on='Kinases',how='left')
 for i in clus_names:
@@ -72,8 +72,9 @@ writer.close()
 
 # %%
 # known kinases
-fileloc_4 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/Bayes sheets/BayesTC_known kinases.xlsx"
-known_df = pd.read_excel(fileloc_4, "Simplified combined V3")
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/known_kinase_activity.xlsx?raw=true"
+data = rq.get(url).content
+known_df = pd.read_excel(BytesIO(data), sheet_name = "Simplified combined V3")
 
 cluster_direct = ['Increase','Decrease','Decrease','Decrease','Decrease','Increase','Increase','Decrease',
                   'Decrease','Increase','Decrease','Decrease','Increase','Decrease']
@@ -112,7 +113,7 @@ writer.close()
 
 # %%
 #position ranking
-#from sugiyama_data import pos_dotscore_list
+#from position_weighting import pos_dotscore_list
 posit = ['-6','-5','-4','-3','-2','-1','+1','+2','+3','+4','+5','+6']
 
 position_based = main_vec[['Kinases']].copy()
@@ -156,15 +157,3 @@ bayes_output.to_excel(writer, sheet_name = 'all clusters')
 writer.save()
 writer.close()
 
-
-
-### check this later
-if __name__ == "__main__":
-   # stuff only to run when not called via 'import' here
-    try:
-        main()
-    except SystemExit:
-        raise
-    except:
-        print_exc()
-        sys.exit(-1)

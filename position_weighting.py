@@ -17,13 +17,14 @@ import pandas as pd
 import numpy as np
 import requests as rq
 from io import BytesIO
+from bayesian_module import dotscores
 
-#import data and clean up
+#import data
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/filtered_kinase_substrates.xlsx?raw=true"
 data = rq.get(url).content
 ks_df = pd.read_excel(BytesIO(data), sheet_name = "Sheet1")
 
-#divide dataframe per kinase
+#organize dataframe per kinase
 kinases = ks_df['Kinase'].unique()
 
 AA = ['A','C','D','E','F','G','H','I','J','K','L','M','N','P','Q','R','S','T','V','W','Y']
@@ -38,7 +39,7 @@ for i in range(len(lengths)):
 kinase_length_dict = {k:v for k,v in zip(kinases,lengths)}
 
 # %%
-# cut out kinases with low substrate matches
+# screen out kinases with low substrate matches (<=20)
 screened_kinases = []
 for e in range(len(kinase_length_dict)):
     if kinase_length_dict[kinases[e]] > 20:
@@ -98,7 +99,7 @@ for n in range(len(freq_ind)):
 #placeholder dictionary
 kinase_freq_dict = {k:v for k,v in zip(screened_kinases,freq_array_mod)}
 
-#introduce reference probabilities
+#import human reference probabilities
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/human_PPSP_background.xlsx?raw=true"
 data = rq.get(url).content
 Sbkgd_df = pd.read_excel(BytesIO(data), sheet_name = 'S-center')
@@ -113,17 +114,16 @@ Tbkgd_array = Tbkgd_df.to_numpy()
 #average S and T backgrounds
 STbkgd_array = np.mean([Sbkgd_array,Tbkgd_array],axis=0)/100
 
-#convert observed frequencies to information content scores [matrix] per kinase
+#convert observed frequencies to information content scores per kinase
 #IC(a,i)=P(a,i)*log((P(a,i)/Pref(a)),2)
 IC_array = list(range(len(screened_kinases)))
 for b in IC_array:
     IC_array[b] = freq_array_mod[b]*np.log2(freq_array_mod[b]/STbkgd_array)
 
-
 #extract clusters
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/TC_rat_IMCD_clusters.xlsx?raw=true"
 data = rq.get(url).content
-cdf = pd.read_excel(BytesIO(data))
+cdf = pd.read_excel(BytesIO(data),None)
 
 clusters_name = ['IB','IA1','IA2a','IA2b','IA2c','IIA1a','IIA1b',
             'IIB1a','IIB1b','IIIA','IIIB1','IIIB2','IVA','IVB']
@@ -143,11 +143,10 @@ for n in range(len(freqclus_ind)):
     cluster_array_mod[n] = mod_array
 
 
-#import IMCD rat background
-
-
-fileloc3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/TC rat IMCD background.xlsx"
-IMCDbkgd_df = pd.read_excel(fileloc3)
+#import IMCD rat reference probabilities
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/TC_rat_IMCD_background.xlsx?raw=true"
+data = rq.get(url).content
+IMCDbkgd_df = pd.read_excel(BytesIO(data))
 IMCDbkgd_array = (IMCDbkgd_df.to_numpy())/100
 
 #create cluster IC matrices
@@ -169,20 +168,14 @@ STY_freq_1 = list(range(len(freqclus_ind)))
 for g in range(len(freqclus_ind)):
     STY_freq_1[g] = np.transpose(freqclus_ind[g])[6]
 
-from bayesian_module import dotscores
 STYdotscores_df = dotscores(STY_freq,STY_freq_1,screened_kinases,clusters_name)
 
-fileloc_3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/STY dot product ranking 355.xlsx"
-writer=pd.ExcelWriter(fileloc_3)
-STYdotscores_df.to_excel(writer, sheet_name='imported ranking')
-
-writer.save()
 
 # %%
-#Creates a dot product scoring between the information content of the positions in the Sugiyama kinases and the positions for the clusters
+#Creates dot product scorings between the information content of the positions in the Sugiyama kinases and the positions for the clusters
 
-pos_dotscore_list = list(range(len(norm_content)))
-for j in range(len(norm_content)):
+pos_dotscore_list = list(range(12))
+for j in range(12):
     pos_kin = list(range(len(IC_array)))
     for h in range(len(IC_array)):
         pos_kin[h] = np.transpose(np.nan_to_num(IC_array[h]))[j]
