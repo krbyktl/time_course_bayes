@@ -160,7 +160,7 @@ cluster_IC_dict = {k:v for k,v in zip(clusters_name,IC_cluster_array)}
 
     
 # %%
-#STY screening
+#Creates a dot product scoring between the frequencies of the 0 position in the Sugiyama kinases and the 0 position for the clusters
 STY_freq = list(range(len(freq_ind)))
 for h in range(len(freq_ind)):
     STY_freq[h] = np.transpose(freq_ind[h])[6]
@@ -179,7 +179,7 @@ STYdotscores_df.to_excel(writer, sheet_name='imported ranking')
 writer.save()
 
 # %%
-# individual position (IC) screening
+#Creates a dot product scoring between the information content of the positions in the Sugiyama kinases and the positions for the clusters
 
 pos_dotscore_list = list(range(len(norm_content)))
 for j in range(len(norm_content)):
