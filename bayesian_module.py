@@ -51,6 +51,7 @@ def interpolate(kinmatrix):
 
 
 # =============================================================================
+# calculator for the cMBF
 # input listvals is the input data for the new likelihood vector
 # noise is intrinsic noise, will depend on if data is expression data,
 # dot product scoring, correlation coefficients, etc

@@ -25,15 +25,17 @@ from io import BytesIO
 from bayesmodules import interpolate
 from bayesmodules import cMBF_calc
 from coloc_data import coloc_dots
+from position_weighting import sugiyama_analysis
 
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/expression_data.xlsx?raw=true"
 data = rq.get(url).content
 express_df = pd.read_excel(BytesIO(data), None)
-
-#from posiiton_weighting import STYdotscores_df
 main_vec = express_df['exp bayes calc V2']
+
+STYdotscores_df, pos_dotscore_list = sugiyama_analysis('https://github.com/krbyktl/time_course_bayes/blob/master/data_files/filtered_kinase_substrates.xlsx?raw=true')
 STYdots = interpolate(STYdotscores_df)
 main_vec = main_vec.rename(columns = {'Gene Symbol':'Kinases'})
+
 
 # %%
 #STY ranking
@@ -113,7 +115,6 @@ writer.close()
 
 # %%
 #position ranking
-#from position_weighting import pos_dotscore_list
 posit = ['-6','-5','-4','-3','-2','-1','+1','+2','+3','+4','+5','+6']
 
 position_based = main_vec[['Kinases']].copy()
@@ -157,3 +158,13 @@ bayes_output.to_excel(writer, sheet_name = 'all clusters')
 writer.save()
 writer.close()
 
+"""
+if __name__ == "__main__":
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        print_exc()
+        sys.exit(-1)
+"""
