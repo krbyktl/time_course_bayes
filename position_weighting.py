@@ -15,10 +15,13 @@ Created on Sun Apr 25 19:40:56 2021
 
 import pandas as pd
 import numpy as np
+import requests as rq
+from io import BytesIO
 
 #import data and clean up
-fileloc = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/clean sugiyama kinase substrates.xlsx"
-ks_df = pd.read_excel(fileloc, engine='openpyxl')
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/filtered_kinase_substrates.xlsx?raw=true"
+data = rq.get(url).content
+ks_df = pd.read_excel(BytesIO(data), sheet_name = "Sheet1")
 
 #divide dataframe per kinase
 kinases = ks_df['Kinase'].unique()
@@ -35,7 +38,7 @@ for i in range(len(lengths)):
 kinase_length_dict = {k:v for k,v in zip(kinases,lengths)}
 
 # %%
-# cut out kinases with low peptide matches
+# cut out kinases with low substrate matches
 screened_kinases = []
 for e in range(len(kinase_length_dict)):
     if kinase_length_dict[kinases[e]] > 20:
@@ -96,10 +99,11 @@ for n in range(len(freq_ind)):
 kinase_freq_dict = {k:v for k,v in zip(screened_kinases,freq_array_mod)}
 
 #introduce reference probabilities
-fileloc1 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/human PPSP background.xlsx"
-Sbkgd_df = pd.read_excel(fileloc1, 'S-center')
-Tbkgd_df = pd.read_excel(fileloc1, 'T-center')
-#Ybkgd_df = pd.read_excel(fileloc1, 'Y-center')
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/human_PPSP_background.xlsx?raw=true"
+data = rq.get(url).content
+Sbkgd_df = pd.read_excel(BytesIO(data), sheet_name = 'S-center')
+Tbkgd_df = pd.read_excel(BytesIO(data), sheet_name = 'T-center')
+
 Sbkgd_df = Sbkgd_df.drop([20,21])
 Sbkgd_df = Sbkgd_df.drop(['Position:',0,-7,7], axis=1)
 Tbkgd_df = Tbkgd_df.drop([20,21])
@@ -117,8 +121,10 @@ for b in IC_array:
 
 
 #extract clusters
-fileloc2 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/TC rat IMCD clusters.xlsx"
-cdf = pd.read_excel(fileloc2, None)
+url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/TC_rat_IMCD_clusters.xlsx?raw=true"
+data = rq.get(url).content
+cdf = pd.read_excel(BytesIO(data))
+
 
 clusters_name = ['IB','IA1','IA2a','IA2b','IA2c','IIA1a','IIA1b',
             'IIB1a','IIB1b','IIIA','IIIB1','IIIB2','IVA','IVB']
@@ -139,6 +145,8 @@ for n in range(len(freqclus_ind)):
 
 
 #import IMCD rat background
+
+
 fileloc3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/TC rat IMCD background.xlsx"
 IMCDbkgd_df = pd.read_excel(fileloc3)
 IMCDbkgd_array = (IMCDbkgd_df.to_numpy())/100
@@ -152,31 +160,6 @@ for b in IC_cluster_array:
 cluster_IC_dict = {k:v for k,v in zip(clusters_name,IC_cluster_array)}
 
     
-#sum of information content for positions
-kinase_sums = []
-for v in range(12):
-    pos_sums = 0
-    for b in range(len(IC_array)):
-        pos_sums = pos_sums + sum(abs(np.nan_to_num(np.transpose(IC_array[b])[v])))
-    kinase_sums.append(pos_sums)
-
-norm_content = []
-for b in kinase_sums:
-    norm_content.append(b/np.mean(kinase_sums))
-    
-kinase_sums.insert(6,0)
-positions = ['-6','-5','-4','-3','-2','-1','0','+1','+2','+3','+4','+5','+6']
-pos_weight = plt.bar(positions, kinase_sums, color = 'grey')
-pos_weight = sns.set_style('white')
-pos_weight = sns.set_style('ticks')
-pos_weight = sns.despine()
-plt.ylabel('Bits', fontsize = 18)
-plt.ylim(0,450)
-plt.xlabel('Position relative to phosphosite', fontsize = 18)
-plt.tight_layout()
-plt.savefig("J:\Depot - dDAVP-time course - Kirby\Figures\IC position weight screened N20",
-            dpi=600)
-    
 # %%
 #STY screening
 STY_freq = list(range(len(freq_ind)))
@@ -187,7 +170,7 @@ STY_freq_1 = list(range(len(freqclus_ind)))
 for g in range(len(freqclus_ind)):
     STY_freq_1[g] = np.transpose(freqclus_ind[g])[6]
 
-from bayesmodules import dotscores
+from bayesian_module import dotscores
 STYdotscores_df = dotscores(STY_freq,STY_freq_1,screened_kinases,clusters_name)
 
 fileloc_3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/STY dot product ranking 355.xlsx"
@@ -198,6 +181,7 @@ writer.save()
 
 # %%
 # individual position (IC) screening
+
 pos_dotscore_list = list(range(len(norm_content)))
 for j in range(len(norm_content)):
     pos_kin = list(range(len(IC_array)))
@@ -207,19 +191,6 @@ for j in range(len(norm_content)):
     for g in range(len(IC_cluster_array)):
         pos_clus[g] = np.transpose(np.nan_to_num(IC_cluster_array[g]))[j]
     pos_dotscore_list[j] = dotscores(pos_kin,pos_clus,screened_kinases,clusters_name)
-    
-
-# %%
-# individual position (freq) screening with weights
-pos_dotscorefreq_list = list(range(len(norm_content)))
-for j in range(len(norm_content)):
-    pos_kin = list(range(len(freq_ind)))
-    for h in range(len(freq_ind)):
-        pos_kin[h] = np.transpose(np.nan_to_num(freq_ind[h]))[j]
-    pos_clus = list(range(len(freqclus_ind)))
-    for g in range(len(freqclus_ind)):
-        pos_clus[g] = np.transpose(np.nan_to_num(freqclus_ind[g]))[j]
-    pos_dotscorefreq_list[j] = dotscores(pos_kin,pos_clus,screened_kinases,clusters_name)
     
 # %%
 writer=pd.ExcelWriter("/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/position rankings_V3IC.xlsx")

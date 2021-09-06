@@ -34,7 +34,7 @@ kinase_coloc = kinase_coloc.to_numpy()
 from bayesian_module import dotscores
 colocdot_df = dotscores(kinase_coloc, cluster_means, kinase_names, cluster_names)
 
-#save file
+#change this to save in current directory
 fileloc4 = "J:\Depot - dDAVP-time course - Kirby\BayesAnalysis\\colocalization mapping V2.xlsx"
 from openpyxl import load_workbook
 book = load_workbook(fileloc4)

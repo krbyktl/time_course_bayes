@@ -158,5 +158,13 @@ writer.close()
 
 
 
-
-
+### check this later
+if __name__ == "__main__":
+   # stuff only to run when not called via 'import' here
+    try:
+        main()
+    except SystemExit:
+        raise
+    except:
+        print_exc()
+        sys.exit(-1)
