@@ -158,13 +158,3 @@ bayes_output.to_excel(writer, sheet_name = 'all clusters')
 writer.save()
 writer.close()
 
-"""
-if __name__ == "__main__":
-    try:
-        main()
-    except SystemExit:
-        raise
-    except:
-        print_exc()
-        sys.exit(-1)
-"""
