@@ -23,7 +23,7 @@ def sugiyama_analysis(link):
     
     #import data
     data = rq.get(link).content
-    ks_df = pd.read_excel(BytesIO(data), sheet_name = "Sheet1")
+    ks_df = pd.read_excel(BytesIO(data), sheet_name = "Sugiyama_2019")
     
     #organize dataframe per kinase
     kinases = ks_df['Kinase'].unique()

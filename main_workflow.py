@@ -22,15 +22,15 @@ import pandas as pd
 import numpy as np
 import requests as rq
 from io import BytesIO
-from bayesmodules import interpolate
-from bayesmodules import cMBF_calc
+from bayesian_module import interpolate
+from bayesian_module import cMBF_calc
 from coloc_data import coloc_dots
 from position_weighting import sugiyama_analysis
 
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/expression_data.xlsx?raw=true"
 data = rq.get(url).content
 express_df = pd.read_excel(BytesIO(data), None)
-main_vec = express_df['exp bayes calc V2']
+main_vec = express_df['exp_post_vec']
 
 STYdotscores_df, pos_dotscore_list = sugiyama_analysis('https://github.com/krbyktl/time_course_bayes/blob/master/data_files/filtered_kinase_substrates.xlsx?raw=true')
 STYdots = interpolate(STYdotscores_df)
@@ -48,14 +48,11 @@ for i in clus_names:
     main_vec[i + '_STY'] = prod/sum(prod)
 main_vec = main_vec.drop(clus_names,axis=1)
 
-fileloc_3 = "/Users/kirbyleo/Box Sync/Depot - dDAVP-time course - Kirby/BayesAnalysis/BayesTC complete calc_python V17.xlsx"
-writer=pd.ExcelWriter(fileloc_3)
-main_vec.to_excel(writer, sheet_name='STY ranking')
-writer.save()
-
 # %%
 #colocalization ranking
 coloc_df = coloc_dots("https://github.com/krbyktl/time_course_bayes/blob/master/data_files/coloc_mapping.xlsx?raw=true")
+coloc_df.reset_index(inplace=True)
+coloc_df = coloc_df.rename(columns = {'index':'Kinases'})
 coloc_vec = main_vec[['Kinases']].copy()
 coloc_vec = coloc_vec.merge(coloc_df,on='Kinases',how='left')
 for i in clus_names:
@@ -64,19 +61,12 @@ for i in clus_names:
     coloc_vec[i + '_coloc'] = prod1/sum(prod1)
 coloc_vec = coloc_vec.drop(clus_names,axis=1)
 
-from openpyxl import load_workbook
-book = load_workbook(fileloc_3)
-writer = pd.ExcelWriter(fileloc_3, engine = 'openpyxl')
-writer.book = book
-coloc_vec.to_excel(writer, sheet_name = 'coloc ranking')
-writer.save()
-writer.close()
 
 # %%
 # known kinases
 url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/known_kinase_activity.xlsx?raw=true"
 data = rq.get(url).content
-known_df = pd.read_excel(BytesIO(data), sheet_name = "Simplified combined V3")
+known_df = pd.read_excel(BytesIO(data), sheet_name = "list")
 
 cluster_direct = ['Increase','Decrease','Decrease','Decrease','Decrease','Increase','Increase','Decrease',
                   'Decrease','Increase','Decrease','Decrease','Increase','Decrease']
@@ -105,16 +95,9 @@ for c in clus_names:
     new_prior = prod2/sum(prod2)
     known_vec[c+'_known'] = new_prior.tolist()
     
-from openpyxl import load_workbook
-book = load_workbook(fileloc_3)
-writer = pd.ExcelWriter(fileloc_3, engine = 'openpyxl')
-writer.book = book
-known_vec.to_excel(writer, sheet_name = 'known kinase ranking')
-writer.save()
-writer.close()
-
 # %%
 #position ranking
+
 posit = ['-6','-5','-4','-3','-2','-1','+1','+2','+3','+4','+5','+6']
 
 position_based = main_vec[['Kinases']].copy()
@@ -122,39 +105,22 @@ int_pos = list(range(len(pos_dotscore_list)))
 for t in range(len(pos_dotscore_list)):
     int_pos[t] = interpolate(pos_dotscore_list[t])
 
-from bayesmodules import selectpos_bayes
-from bayesmodules import cMBF_calc
+from bayesian_module import selectpos_bayes
+from bayesian_module import cMBF_calc
 bayes_IB = selectpos_bayes('IB',int_pos,known_vec)
 
 bayes_output = bayes_IB[['Kinases']].copy()  
 bayes_output['IB'] = bayes_IB.iloc[:,-1:]
 
-book = load_workbook(fileloc_3)
-writer = pd.ExcelWriter(fileloc_3, engine = 'openpyxl')
-writer.book = book
-bayes_IB.to_excel(writer, sheet_name = 'IB')
-writer.save()
-writer.close()
-
 clus_names = STYdots.columns.tolist()
 clus_names.remove('Kinases')
 rest_clus = clus_names
-rest_clus.remove('IB')
-from openpyxl import load_workbook
+
 for v in rest_clus:
     bayes_clus = selectpos_bayes(v,int_pos,known_vec)
     bayes_output[v] = bayes_clus.iloc[:,-1:]
-    book = load_workbook(fileloc_3)
-    writer = pd.ExcelWriter(fileloc_3, engine = 'openpyxl')
-    writer.book = book
-    bayes_clus.to_excel(writer, sheet_name = v)
-    writer.save()
-    writer.close()
+bayes_output['IVA'] = known_vec['IVA_known']
+bayes_output['IVB'] = known_vec['IVB_known']
 
-book = load_workbook(fileloc_3)
-writer = pd.ExcelWriter(fileloc_3, engine = 'openpyxl')
-writer.book = book
-bayes_output.to_excel(writer, sheet_name = 'all clusters')
-writer.save()
-writer.close()
+
 

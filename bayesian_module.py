@@ -76,7 +76,7 @@ def cMBF_calc(newdata,noise):
 def selectpos_bayes(cluster,dotposdata,coloc):
     url = "https://github.com/krbyktl/time_course_bayes/blob/master/data_files/clus_impt_pos.xlsx?raw=true"
     data = rq.get(url).content
-    cluspos = pd.read_excel(BytesIO(data), sheet_name = "V3")
+    cluspos = pd.read_excel(BytesIO(data), sheet_name = "positioning")
     clusmat = cluspos[cluster]
     int_posselec = []
     int_posselec.append(dotposdata[0]['Kinases'])
